@@ -40,6 +40,10 @@
 			drawMask();
 		}
 		
+		public function get maskHeight():Number{
+			return maskH;
+		}
+		
 		public function redrawWindow():void{
 			drawMask();
 		}

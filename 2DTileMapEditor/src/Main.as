@@ -24,7 +24,7 @@
 		public var tileSize:Number = 24;
 		public var mapPos:Object = {x:0,y:0};
 		
-		public var mapSize:Object = {w:200,h:30};
+		public var mapSize:Object = {w:30,h:20};
 		
 		public var targetTilePos:Object = {x:0,y:0};
 		
@@ -47,6 +47,7 @@
 		private var wrapper:Sprite;
 		private var tileWrapper:Sprite;
 		private var tile2Wrapper:Sprite;
+		private var propertiesList:Sprite;
 		
 		private var toolState:IState = new Brush();
 		private var lastState:IState;
@@ -91,6 +92,7 @@
 		
 		private var defTileWindow:ScrollWindow;
 		private var usedTileWindow:ScrollWindow;
+		private var propertiesWindow:ScrollWindow;
 		
 		public function Main() {
 			if (stage) initialize();
@@ -106,17 +108,14 @@
 			loadMap();
 		}
 		
-		public function addKeyControl():void{
-		}
-		
 		private function loadMap(map:Object = null):void
 		{
 			if (!map)
 			{
 				map = {layers:[],tiles:[],settings:{}};
 				map.layers[0] = {name:"collision", id:0, map:[]};
-				map.settings = {mapSize:{w:200, h:30}, tileSize:24};
-				set2DMap(map.layers[0].map, map.settings.mapSize.w);
+				map.settings = {mapSize:{w:mapSize.w, h:mapSize.h}, tileSize:24};
+				set2DMap(map.layers[0].map, map.settings.mapSize.h);
 				optimize2d(map.layers[0].map, map.settings.mapSize.w, map.settings.mapSize.h);
 			}
 			
@@ -161,6 +160,7 @@
 			
 			defTileWindow = new ScrollWindow();
 			usedTileWindow = new ScrollWindow();
+			propertiesWindow = new ScrollWindow();
 			
 			zoomText = new TextField();
 			zoomText.text = int(zoomSlider.startVal * 100) + "%";
@@ -189,6 +189,7 @@
 			wrapper = new Sprite();
 			tileWrapper = new Sprite();
 			tile2Wrapper = new Sprite();
+			propertiesList = new Sprite();
 			
 			menuBackground = new MovieClip();
 			menuBackground.name = "menuBackground";
@@ -214,6 +215,18 @@
 			tileIndicator.graphics.beginFill(0x000000,0);
 			tileIndicator.graphics.drawRect(0,0,tileSize*curTileBM.scaleX,tileSize*curTileBM.scaleX);
 			tileIndicator.graphics.endFill();
+			
+			
+			propertiesList.graphics.clear();
+			propertiesList.graphics.lineStyle(2, 0xaaaaaa);
+			var matr:Matrix = new Matrix();
+			matr.createGradientBox(10, 10, -Math.PI/2,0,1);
+			propertiesList.graphics.beginGradientFill(GradientType.LINEAR,[0x999999,0x777777], [1, 1], [160, 255],matr);
+			propertiesList.graphics.drawRoundRect(0,0,menuBackground.width - 10,propertiesList.height +10,8);
+			propertiesList.graphics.endFill();
+			
+			propertiesWindow.maskHeight = Math.max(stage.stageHeight - propertiesWindow.y - 40, 0);
+			propertiesWindow.maskWidth = menuBackground.width - 10;
 		}
 		
 		public function addAssets():void{
@@ -232,6 +245,11 @@
 			usedTileWindow.showMe(stage);
 			usedTileWindow.contentMC = tile2Wrapper;
 			usedTileWindow.maskHeight = 4 * curTileBM.scaleX * tileSize;
+			
+			propertiesWindow.showMe(stage);
+			propertiesWindow.contentMC = propertiesList;
+			propertiesWindow.maskHeight = 400;
+			propertiesWindow.maskWidth = 194;
 			
 			this.addChild(toolBrush);
 			this.addChild(toolScroll);
@@ -258,6 +276,8 @@
 			defTileWindow.x = 10;
 			usedTileWindow.y = 80;
 			usedTileWindow.x = 70;
+			propertiesWindow.y = 300;
+			propertiesWindow.x = 0;
 			
 			toolBrush.x = toolScroll.x = toolEraser.x = stage.stageWidth - 80;
 			toolScroll.y = 40;
@@ -268,28 +288,43 @@
 		
 		public function addTileInput():void{
 			var input:PairedInput = new PairedInput();
-			input.y = 300 + (tileVars.length * 24);
-			input.x = 10;;
-			this.addChild(input);
+			propertiesList.addChild(input);
 			
 			var btn:MC_Button = new MC_Button();
 			btn.name = "btn";
 			btn.onButton = false;
 			btn.showText = false;
+			btn.x = 150;
 			input.addChild(btn);
 			btn.id = tileVars.length;
-			btn.x = 150;
 			btn.addEventListener(MouseEvent.MOUSE_UP, delTileInput);
 			tileVars.push(input);
 			
 			this.addChild(saveTile);
 			this.addChild(updateTile);
-			saveTile.x = 10;
-			updateTile.x = 80;
-			saveTile.y = updateTile.y = tileVars[tileVars.length-1].y + 60;
+			positionPropertiesPanel();
+		}
+		
+		private function positionPropertiesPanel():void
+		{
+			for (var i:int = 0; i < tileVars.length; i++)
+			{
+				tileVars[i].y = 5 + (i * 24);
+				tileVars[i].x = 10;
+			}
 			
 			addInput.x = 10;
-			addInput.y = 300 + (tileVars.length* 24);
+			addInput.y = 5 + (tileVars.length * 24);
+			drawMenuObjects();
+			propertiesWindow.maskHeight = (stage.stageHeight - propertiesWindow.y - 40 >0)?Math.min(stage.stageHeight - propertiesWindow.y - 40,400):40;
+			trace(propertiesWindow.width);
+			
+			if (this.contains(saveTile))
+			{
+				saveTile.x = 10;
+				updateTile.x = 80;
+				saveTile.y = updateTile.y = propertiesWindow.y + Math.min(propertiesWindow.maskHeight, propertiesList.height) + 10;
+			}
 		}
 		
 		public function adjustZoom():void{
@@ -329,20 +364,12 @@
 		private function gameLoop(e:Event):void 
 		{
 			updateTool();
+			updateFullMap();
 		}
 		
-		private function onStageResize(e:Event):void 
-		{
-			drawMenuObjects();
-			possitionAssets();
-			trace(menuBackground.x);
-		}
 		
-		public function delTileInput(e:MouseEvent):void{
-			this.removeChild(tileVars[e.currentTarget.id]);
-			tileVars.splice(e.currentTarget.id,1);
-			updateInputID();
-		}
+		
+		
 		
 		public function flipGrid():void{
 			gridLines = !gridLines;
@@ -372,20 +399,6 @@
 		//========================= LOAD/SAVE STUFF ==============================//
 		
 		public function mapLoaded(e:Event):void{
-			/*var tempXML:XML = new XML(tempFR.data.readUTFBytes(tempFR.data.length));
-			for(var i:int=0;i<tempXML.layer.length();i++){
-				for(var j:int=0;j<tempXML.layer[i].width.length();j++){
-					for(var k:int=0;k<tempXML.layer[i].width[j].tile.length();k++){
-						var tempTile = new MapTile();
-						tempTile.mapName = tempXML.layer[i].width[j].tile[k].@tileSet;
-						tempTile.mapX = tempXML.layer[i].width[j].tile[k].@setX;
-						tempTile.mapY = tempXML.layer[i].width[j].tile[k].@setY;
-						mapLayers[i][j][k] = tempTile;
-					}
-				}
-			}
-			
-			updateFullMap();*/
 			var testOb:Object = JSON.parse(tempFR.data.readUTFBytes(tempFR.data.length));
 			loadMap(testOb);
 		}
@@ -425,9 +438,10 @@
 		
 		
 		public function optimize2d(tArray:Array, width:int, height:int):Array{
+			trace(tArray.length + " is length");
 			for(var y:int = 0;y<height;y++){
 				for(var x:int = 0;x<width;x++){
-					if(tArray[y][x] == null) tArray[y][x] = 0;
+					if(tArray[y][x] == undefined) tArray[y][x] = 0;
 				}
 			}
 			return tArray;
@@ -449,8 +463,6 @@
 						togBtn.name = "btn";
 						togBtn.labelTxt = field;
 						togBtn.onButton = false;
-						togBtn.x = 10;
-						togBtn.y = 300 + (tileVars.length * 24);
 						var btn:MC_Button = new MC_Button();
 						btn.name = "btn";
 						btn.showText = false;
@@ -459,7 +471,7 @@
 						btn.id = tileVars.length;
 						btn.x = 150;
 						btn.addEventListener(MouseEvent.MOUSE_UP, delTileInput);
-						this.addChild(togBtn);
+						propertiesList.addChild(togBtn);
 						tileVars.push(togBtn);
 					}
 					trace(tOb[field] is int);
@@ -468,8 +480,6 @@
 						var input:PairedInput = new PairedInput();
 						input.fieldName = field;
 						input.currentValue = tOb[field];
-						input.y = 300 + (tileVars.length * 24);
-						input.x = 10;
 						var btn:MC_Button = new MC_Button();
 						btn.name = "btn";
 						input.addChild(btn);
@@ -478,25 +488,21 @@
 						btn.onButton = false;
 						btn.x = 150;
 						btn.addEventListener(MouseEvent.MOUSE_UP, delTileInput);
-						this.addChild(input);
+						propertiesList.addChild(input);
 						tileVars.push(input);
 					}
 					
 				}
 			}
-			this.addChild(addInput);
-			addInput.x = 10;
-			addInput.y = 300 + (tileVars.length* 24);
+			propertiesList.addChild(addInput);
 			if(tileVars.length >0){
 				this.addChild(saveTile);
 				this.addChild(updateTile);
-				saveTile.x = 10;
-				updateTile.x = 80;
-				saveTile.y = updateTile.y = tileVars[tileVars.length-1].y + 60;
 			}else{
 				if(this.contains(saveTile))this.removeChild(saveTile);
 				if(this.contains(updateTile))this.removeChild(updateTile);
 			}
+			positionPropertiesPanel();
 		}
 		
 		public function popTileSet():void{
@@ -523,7 +529,6 @@
 					tileOb.hitbox = [];
 					tileOb.hitbox[0] = {boxPosition:[0, 0], boxSize:[tileSize, tileSize]};
 					tileOb.tempID = tempY;
-					tileOb.flip = true;
 					
 					defTileList.push(tileOb);
 					var tileBMD:BitmapData = new BitmapData(tileSize,tileSize);
@@ -613,8 +618,8 @@
 		
 		
 		// starting from element 0, creates new arrays in the given array for the length provided
-		public function set2DMap(map:Array, length:int):void{
-			for(var i:int = 0; i<length;i++){
+		public function set2DMap(map:Array, height:int):void{
+			for(var i:int = 0; i<height;i++){
 				map[i] = [];
 			}
 		}
@@ -624,20 +629,16 @@
 				for(var j:int =0;j< tileVars[i].numChildren; j++){
 					if(tileVars[i].getChildAt(j).name == "btn")tileVars[i].getChildAt(j).id = i;
 				}
-				tileVars[i].y = 300 + (i * 24);
 			} 
 			addInput.x = 10;
-			addInput.y = 300 + (tileVars.length* 24);
 			if(tileVars.length >0){
 				this.addChild(saveTile);
 				this.addChild(updateTile);
-				saveTile.x = 10;
-				updateTile.x = 80;
-				saveTile.y = updateTile.y = tileVars[tileVars.length-1].y + 60;
 			}else{
 				this.removeChild(saveTile);
 				this.removeChild(updateTile);
 			}
+			positionPropertiesPanel();
 		}
 		
 		public function updateKeyInput():void{
@@ -716,6 +717,183 @@
 		
 		
 		
+		
+		private function updatePositions():void
+		{
+			targetTilePos.x = Math.floor(sceneBM.mouseX / tileSize);
+			targetTilePos.y = Math.floor(sceneBM.mouseY / tileSize);
+			trace("x:" + targetTilePos.x + "   y:" + targetTilePos.y);
+			
+			lastMousePos.x = curMousePos.x;
+			lastMousePos.y = curMousePos.y;
+			curMousePos.x = mouseX;
+			curMousePos.y = mouseY;
+		}
+		
+		
+		
+		private function buttonUpdate():void
+		{	
+			toolBrush.pressed = toolScroll.pressed = toolEraser.pressed = false;
+			
+			if (toolState is Brush)
+			{
+				toolBrush.pressed = true;
+			}
+			if (toolState is Eraser)
+			{
+				toolEraser.pressed = true;
+			}
+			if (toolState is Translate)
+			{
+				toolScroll.pressed = true;
+			}
+		}
+		
+		
+		
+		
+		
+		
+		
+		private function createBitmapData(sheet:BitmapData,x:int,y:int,width:int,height:int,reverse:Boolean):BitmapData{
+			var sprite:BitmapData = new BitmapData(width,height,true);
+			sprite.copyPixels(sheet,new Rectangle(x,y,width,height),new Point(0,0));
+			if(reverse){
+				var newSprite:BitmapData = new BitmapData(sprite.width,sprite.height,true,0x00ffffff);
+				var mx:Matrix = new Matrix();
+				mx.scale(-1,1);
+				mx.translate(sprite.width,0);
+				newSprite.draw(sprite,mx);
+				sprite = newSprite;
+			}
+			return sprite;
+		}
+				
+		private function initialize(e:Event = null):void{
+			removeEventListener(Event.ADDED_TO_STAGE, initialize);
+			stage.scaleMode = StageScaleMode.NO_SCALE;
+			stage.align = StageAlign.TOP_LEFT;
+			startGame();
+		}
+		
+		private function onStageResize(e:Event):void 
+		{
+			positionPropertiesPanel();
+			drawMenuObjects();
+			possitionAssets();
+			trace(menuBackground.x);
+			
+		}
+		
+		public function updateTileFromInputs(e:MouseEvent):void{
+			if(inputsNotBlank()){
+				for(var field:String in curTileData){
+					if(field != "frames" && field != "hitbox" && field != "id"){
+						delete curTileData[field];
+					}
+				}
+				for each(var tInput:* in tileVars){
+					trace((tInput is MC_Button) + " button");
+					if (tInput is MC_Button)
+					{
+						curTileData[tInput.labelTxt] = tInput.isPressed;
+					}
+					if (tInput is PairedInput)
+					{
+						curTileData[tInput.fieldName] = tInput.currentValue;
+					}
+					
+				}
+				if(curTileData.id != undefined) jsonTileList[curTileData.id] = curTileData;
+			}
+			
+		}
+		
+		public function onTileMove(e:MouseEvent):void{
+			
+			lastMousePos.y = curMousePos.y;
+			curMousePos.y = mouseY;
+			var dif:Number = curMousePos.y - lastMousePos.y;
+			
+			if(curTileBM.y + dif < -(curTileBM.height - 386)){
+			   	curTileBM.y = -(curTileBM.height - 386);
+			}else if(curTileBM.y + dif > 0){
+				curTileBM.y = 0;
+			}else{
+				curTileBM.y += dif;
+			}
+			//tileIndicator.y = curTileBM.y + (indY * tileSize);
+			tileScroll = true;			
+			
+		}
+		
+		public function saveTileFromInputs(e:MouseEvent):void{
+			if(inputsNotBlank()){
+				var tTile:Object = new Object();
+				for(var field:* in curTileData){
+					if(field == "frames" || field == "hitbox"){
+						tTile[field] = curTileData[field];
+					}
+				}
+				
+				for each(var tInput:* in tileVars){
+					if (tInput is MC_Button)
+					{
+						tTile[tInput.labelTxt] = tInput.isPressed;
+					}else{
+						tTile[tInput.fieldName] = tInput.currentValue;
+					}
+					
+				}
+				pushTile(tTile);
+			}
+			
+		}
+		
+		public function onMouseScroll(e:MouseEvent):void{
+			zoomSlider.setCurrent((e.delta >0)?zoomSlider.curVal + 0.1:zoomSlider.curVal - 0.1);
+		}
+		
+		private function onSliderUpdate(e:Event):void{
+			adjustZoom();
+		}
+		
+		public function onTileLibRelease(e:MouseEvent):void{
+			if (!defTileWindow.scrolled){
+				trace(e.target.name);
+				curTileData = defTileList[int(e.target.name)];
+				populateTileInputs(curTileData);			
+			}
+		}
+		
+		public function onUsedTileLibRelease(e:MouseEvent):void{
+			if(!usedTileWindow.scrolled){
+				curTileData = jsonTileList[int(e.target.name)];
+				trace("onUsedtileLibRelease " + curTileData.id);
+				populateTileInputs(curTileData);			
+			}
+		}
+		
+		public function onMouseClick(e:Event):void{
+			trace(e.target.name);
+			switch(e.target.name)
+			{
+				case "toolScroll":
+					toolState = new Translate();
+					break;
+					
+				case "toolBrush":
+					toolState = new Brush();
+					break;
+					
+				case "toolEraser":
+					toolState = new Eraser();
+					break;
+			}
+			buttonUpdate();
+		}
+		
 		public function onAddInput(e:MouseEvent):void{
 			if (tileVars.length == 0 || !tileVars[tileVars.length -1].hasOwnProperty("fieldName") || tileVars[tileVars.length -1].fieldName != "")
 			{
@@ -789,162 +967,11 @@
 		{
 			updateTool();
 		}
-		private function updatePositions():void
-		{
-			targetTilePos.x = Math.floor(sceneBM.mouseX / tileSize);
-			targetTilePos.y = Math.floor(sceneBM.mouseY / tileSize);
-			
-			lastMousePos.x = curMousePos.x;
-			lastMousePos.y = curMousePos.y;
-			curMousePos.x = mouseX;
-			curMousePos.y = mouseY;
-		}
 		
-		public function onMouseClick(e:Event):void{
-			trace(e.target.name);
-			switch(e.target.name)
-			{
-				case "toolScroll":
-					toolState = new Translate();
-					break;
-					
-				case "toolBrush":
-					toolState = new Brush();
-					break;
-					
-				case "toolEraser":
-					toolState = new Eraser();
-					break;
-			}
-			buttonUpdate();
-		}
-		
-		private function buttonUpdate():void
-		{	
-			toolBrush.pressed = toolScroll.pressed = toolEraser.pressed = false;
-			
-			if (toolState is Brush)
-			{
-				toolBrush.pressed = true;
-			}
-			if (toolState is Eraser)
-			{
-				toolEraser.pressed = true;
-			}
-			if (toolState is Translate)
-			{
-				toolScroll.pressed = true;
-			}
-		}
-		
-		public function onMouseScroll(e:MouseEvent):void{
-			zoomSlider.setCurrent((e.delta >0)?zoomSlider.curVal + 0.1:zoomSlider.curVal - 0.1);
-		}
-		
-		private function onSliderUpdate(e:Event):void{
-			adjustZoom();
-		}
-		
-		public function onTileLibRelease(e:MouseEvent):void{
-			if (!defTileWindow.scrolled){
-				trace(e.target.name);
-				curTileData = defTileList[int(e.target.name)];
-				populateTileInputs(curTileData);			
-			}
-		}
-		
-		public function onUsedTileLibRelease(e:MouseEvent):void{
-			if(!usedTileWindow.scrolled){
-				curTileData = jsonTileList[int(e.target.name)];
-				trace("onUsedtileLibRelease " + curTileData.id);
-				populateTileInputs(curTileData);			
-			}
-		}
-		
-		public function onTileMove(e:MouseEvent):void{
-			
-			lastMousePos.y = curMousePos.y;
-			curMousePos.y = mouseY;
-			var dif:Number = curMousePos.y - lastMousePos.y;
-			
-			if(curTileBM.y + dif < -(curTileBM.height - 386)){
-			   	curTileBM.y = -(curTileBM.height - 386);
-			}else if(curTileBM.y + dif > 0){
-				curTileBM.y = 0;
-			}else{
-				curTileBM.y += dif;
-			}
-			//tileIndicator.y = curTileBM.y + (indY * tileSize);
-			tileScroll = true;			
-			
-		}
-		
-		public function saveTileFromInputs(e:MouseEvent):void{
-			if(inputsNotBlank()){
-				var tTile:Object = new Object();
-				for(var field:* in curTileData){
-					if(field == "frames" || field == "hitbox"){
-						tTile[field] = curTileData[field];
-					}
-				}
-				
-				for each(var tInput:* in tileVars){
-					if (tInput is MC_Button)
-					{
-						tTile[tInput.labelTxt] = tInput.isPressed;
-					}else{
-						tTile[tInput.fieldName] = tInput.currentValue;
-					}
-					
-				}
-				pushTile(tTile);
-			}
-			
-		}
-		
-		public function updateTileFromInputs(e:MouseEvent):void{
-			if(inputsNotBlank()){
-				for(var field:String in curTileData){
-					if(field != "frames" && field != "hitbox" && field != "id"){
-						delete curTileData[field];
-					}
-				}
-				for each(var tInput:* in tileVars){
-					trace((tInput is MC_Button) + " button");
-					if (tInput is MC_Button)
-					{
-						curTileData[tInput.labelTxt] = tInput.isPressed;
-					}
-					if (tInput is PairedInput)
-					{
-						curTileData[tInput.fieldName] = tInput.currentValue;
-					}
-					
-				}
-				if(curTileData.id != undefined) jsonTileList[curTileData.id] = curTileData;
-			}
-			
-		}
-		
-		private function createBitmapData(sheet:BitmapData,x:int,y:int,width:int,height:int,reverse:Boolean):BitmapData{
-			var sprite:BitmapData = new BitmapData(width,height,true);
-			sprite.copyPixels(sheet,new Rectangle(x,y,width,height),new Point(0,0));
-			if(reverse){
-				var newSprite:BitmapData = new BitmapData(sprite.width,sprite.height,true,0x00ffffff);
-				var mx:Matrix = new Matrix();
-				mx.scale(-1,1);
-				mx.translate(sprite.width,0);
-				newSprite.draw(sprite,mx);
-				sprite = newSprite;
-			}
-			return sprite;
-		}
-				
-		private function initialize(e:Event = null):void{
-			removeEventListener(Event.ADDED_TO_STAGE, initialize);
-			stage.scaleMode = StageScaleMode.NO_SCALE;
-			stage.align = StageAlign.TOP_LEFT;
-			startGame();
+		public function delTileInput(e:MouseEvent):void{
+			propertiesList.removeChild(tileVars[e.currentTarget.id]);
+			tileVars.splice(e.currentTarget.id,1);
+			updateInputID();
 		}
 	}
 }

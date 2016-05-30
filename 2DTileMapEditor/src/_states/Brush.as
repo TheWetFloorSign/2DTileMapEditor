@@ -9,12 +9,7 @@
 		{
 			if (map.targetTilePos.y >= 0 && map.targetTilePos.y < map.mapSize.h && map.targetTilePos.x >= 0 && map.targetTilePos.x < map.mapSize.w)
 			{
-				if (map.curLayer[map.targetTilePos.y][map.targetTilePos.x] != map.pushTile(map.curTileData))
-				{
-					map.curLayer[map.targetTilePos.y][map.targetTilePos.x] = map.pushTile(map.curTileData);
-					map.updateFullMap();
-				}
-				
+				map.curLayer[map.targetTilePos.y][map.targetTilePos.x] = map.pushTile(map.curTileData);
 			}
 			return null;
 		}
