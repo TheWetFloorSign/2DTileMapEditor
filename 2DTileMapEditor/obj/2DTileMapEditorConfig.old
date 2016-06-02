@@ -8,15 +8,15 @@
   <compiler>
     <define append="true">
       <name>CONFIG::debug</name>
-      <value>true</value>
-    </define>
-    <define append="true">
-      <name>CONFIG::release</name>
       <value>false</value>
     </define>
     <define append="true">
+      <name>CONFIG::release</name>
+      <value>true</value>
+    </define>
+    <define append="true">
       <name>CONFIG::timeStamp</name>
-      <value>'30/05/2016'</value>
+      <value>'02/06/2016'</value>
     </define>
     <define append="true">
       <name>CONFIG::air</name>
@@ -30,7 +30,9 @@
       <name>CONFIG::desktop</name>
       <value>false</value>
     </define>
-    <verbose-stacktraces>true</verbose-stacktraces>
+    <optimize>true</optimize>
+    <omit-trace-statements>true</omit-trace-statements>
+    <verbose-stacktraces>false</verbose-stacktraces>
     <source-path append="true">
       <path-element>C:\Users\bmccarthy\Desktop\2DTileMapEditor\src</path-element>
       <path-element>C:\Program Files (x86)\FlashDevelop\Library\AS3\classes</path-element>
@@ -40,7 +42,7 @@
     <path-element>C:\Users\bmccarthy\Desktop\2DTileMapEditor\src\Main.as</path-element>
   </file-specs>
   <default-background-color>#FFFFFF</default-background-color>
-  <default-frame-rate>100</default-frame-rate>
+  <default-frame-rate>30</default-frame-rate>
   <default-size>
     <width>800</width>
     <height>600</height>

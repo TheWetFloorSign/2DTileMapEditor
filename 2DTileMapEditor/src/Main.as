@@ -24,7 +24,7 @@
 		public var tileSize:Number = 24;
 		public var mapPos:Object = {x:0,y:0};
 		
-		public var mapSize:Object = {w:30,h:20};
+		public var mapSize:Object = {w:20,h:20};
 		
 		public var targetTilePos:Object = {x:0,y:0};
 		
@@ -155,7 +155,7 @@
 			layerSelector = new PlayerIncreaseNum(0,0,2,1,"Layer",2);
 			layerSelector.color = 0xbbbbbb;
 			zoomSlider = new DragSlider();
-			zoomSlider.minVal = 0.5;
+			zoomSlider.minVal = 0.25;
 			zoomSlider.maxVal = 4;
 			
 			defTileWindow = new ScrollWindow();
@@ -261,8 +261,6 @@
 			menuBackground.x = -3;
 			menuBackground.y = -3;
 			
-					
-			
 			zoomSlider.x = layerSelector.x;
 			zoomSlider.y = layerSelector.y + layerSelector.height + 10;
 			
@@ -367,10 +365,6 @@
 			updateFullMap();
 		}
 		
-		
-		
-		
-		
 		public function flipGrid():void{
 			gridLines = !gridLines;
 			updateFullMap();
@@ -391,10 +385,6 @@
 			}
 			return bTemp;
 		}
-		
-		
-		
-		
 		
 		//========================= LOAD/SAVE STUFF ==============================//
 		
@@ -435,10 +425,8 @@
 		
 		//========================= END LOAD/SAVE STUFF ==============================//
 		
-		
-		
-		public function optimize2d(tArray:Array, width:int, height:int):Array{
-			trace(tArray.length + " is length");
+		public function optimize2d(tArray:Array, width:int, height:int):Array
+		{
 			for(var y:int = 0;y<height;y++){
 				for(var x:int = 0;x<width;x++){
 					if(tArray[y][x] == undefined) tArray[y][x] = 0;
@@ -447,11 +435,12 @@
 			return tArray;
 		}
 		
-		public function populateTileInputs(tOb:Object):void{
+		public function populateTileInputs(tOb:Object):void
+		{
 			for each(var inp:* in tileVars){
 				inp.parent.removeChild(inp);
 			}
-			trace("populateTileInputs " + ((tOb.tempID != undefined)?tOb.tempID:tOb.id));
+			
 			tileVars = [];
 			
 			for(var field:String in tOb){
@@ -474,7 +463,6 @@
 						propertiesList.addChild(togBtn);
 						tileVars.push(togBtn);
 					}
-					trace(tOb[field] is int);
 					if (tOb[field] is int || tOb[field] is Number || tOb[field] is String)
 					{
 						var input:PairedInput = new PairedInput();
@@ -565,7 +553,6 @@
 				tile2Wrapper.addChild(tileDisplay);
 				tileDisplay.y = tempY * tileSize * scale;
 				tileDisplay.scaleX = tileDisplay.scaleY = scale;
-				
 				
 				tileDisplay.addEventListener(MouseEvent.MOUSE_UP, onUsedTileLibRelease);
 				
@@ -661,12 +648,10 @@
 		public function updateFullMap():void
 		{
 			sceneBMD.lock();
-			trace(sceneBMD.height)
-			sceneBMD.copyPixels(new BitmapData(sceneBMD.width,sceneBMD.height,false,0xFFFFFF),sceneBMD.rect,new Point(0,0),null,null,true);
+			sceneBMD.floodFill(0, 0, 0xffffff);
 			var tempTile:Object;
 			for (var lay:* in mapLayers)
 			{
-				trace(mapLayers[lay].map.length);
 				for (var k:int = 0; k < mapSize.w; k++)
 				{
 					
@@ -676,23 +661,12 @@
 						{
 							if (mapLayers[lay].map[j][k] == 0)
 							{
-								sceneBMD.copyPixels(new BitmapData(tileSize,tileSize,true,0x00000000),new Rectangle(0,0,tileSize,tileSize),new Point(k * tileSize,j * tileSize));
-							}else if (lay != curLayer)
+								sceneBMD.copyPixels(new BitmapData(tileSize,tileSize,true,0xffffffff),new Rectangle(0,0,tileSize,tileSize),new Point(k * tileSize,j * tileSize));
+							}else 
 							{
 								tempTile = tileByID(mapLayers[lay].map[j][k]);
-								//sceneBMD.copyPixels(tileSheet, new Rectangle(tempTile.frames[0].framePosition[0],tempTile.frames[0].framePosition[1],tileSize,tileSize),new Point(k * tileSize,j * tileSize),new BitmapData(tileSize, tileSize, true, 0x59FFFFFF),null,true);
 								sceneBMD.copyPixels(createBitmapData(tileSheetData, tempTile.frames[0].framePosition[0], tempTile.frames[0].framePosition[1], tileSize, tileSize,tempTile.frames[0].flip), new Rectangle(0,0,tileSize,tileSize), new Point(k * tileSize, j * tileSize));
-							}else
-							{
-								if (mapLayers[lay].map[j][k] == 0)
-								{
-									sceneBMD.copyPixels(new BitmapData(tileSize,tileSize,true,0x00000000),new Rectangle(0,0,tileSize,tileSize),new Point(k * tileSize,j * tileSize));
-								}else
-								{
-									tempTile = tileByID(mapLayers[lay].map[j][k]);
-									sceneBMD.copyPixels(tileSheetData, new Rectangle(tempTile.frames[0].framePosition[0],tempTile.frames[0].framePosition[1],tileSize,tileSize),new Point(k * tileSize,j * tileSize));
-								}								
-							}							
+							}						
 						}
 					}
 				}
@@ -714,12 +688,10 @@
 			toolState.update(this);	
 		}
 		
-		
-		
-		
-		
 		private function updatePositions():void
 		{
+			targetTilePos.lastX = targetTilePos.x;
+			targetTilePos.lastY = targetTilePos.y;
 			targetTilePos.x = Math.floor(sceneBM.mouseX / tileSize);
 			targetTilePos.y = Math.floor(sceneBM.mouseY / tileSize);
 			trace("x:" + targetTilePos.x + "   y:" + targetTilePos.y);
@@ -729,8 +701,6 @@
 			curMousePos.x = mouseX;
 			curMousePos.y = mouseY;
 		}
-		
-		
 		
 		private function buttonUpdate():void
 		{	
@@ -749,12 +719,6 @@
 				toolScroll.pressed = true;
 			}
 		}
-		
-		
-		
-		
-		
-		
 		
 		private function createBitmapData(sheet:BitmapData,x:int,y:int,width:int,height:int,reverse:Boolean):BitmapData{
 			var sprite:BitmapData = new BitmapData(width,height,true);
@@ -923,7 +887,7 @@
 					case 32:
 						lastState = toolState;
 						toolState = new Translate();
-						inputs[32] = true;						
+						inputs[32] = true;							
 						break;
 					case 66:
 						toolState = new Brush();
@@ -961,11 +925,6 @@
 					break;
 			}
 			buttonUpdate();
-		}
-		
-		public function onMouseMoveCanvas(e:MouseEvent):void
-		{
-			updateTool();
 		}
 		
 		public function delTileInput(e:MouseEvent):void{
